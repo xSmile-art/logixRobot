@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {Circle, Path} from 'react-native-svg';
+import {Circle, G, Path, Text} from 'react-native-svg';
 
 function WaveView(props) {
   const {x, y, radius, progress, total} = props;
@@ -29,28 +29,21 @@ function WaveView(props) {
     // console.log(`cX: ${cX}  cY: ${cY}`);
     console.log(`endX: ${endX}  endY: ${endY}`);
     console.log('================================');
-    /*d={`M${startX} ${startY - 50} C${startX} 100,200 200, ${endX} ${
-      endY - 50
-    } H${startX} Z `}*/
-
     return (
-      <>
-        <Circle x={x} y={y} r={radius} fill={'pink'} />
-
-        <Path
-          d="M28 150
-              C40.75 130,95.25 130, 109 150
-              S163.5 170,191 150
-              S245.5 130,272 150Z"
-          stroke={'green'}
-          fill="rgba(0, 0, 50, .2)"
-          strokeWidth={1}
-          strokeLinecap="round"
-          // transform={{
-          //   rotation: progress,
-          // }}
-        />
-      </>
+      <G>
+        <Circle cx={x} cy={y} r={radius} fill={'pink'} />
+        <Circle cx={x} cy={y} r={radius} fill="none" />
+        <G>
+          <Path
+            d="M28 150 C150,200 150,100 273,150 A90,90 0 0,1 28,150z"
+            fill="rgba(135,206,250,.4)"
+          />
+          <Path
+            d="M28,150 C150,100 150,200 273,150 A90,90 0 0,1 28,150z"
+            fill="rgba(135,206,250,.3)"
+          />
+        </G>
+      </G>
     );
   }
 
