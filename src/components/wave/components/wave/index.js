@@ -1,48 +1,102 @@
-import React, {useMemo} from 'react';
-import {Circle, G, Path, Text} from 'react-native-svg';
+import React, {useEffect, useMemo, useRef} from 'react';
+import {Circle, G, Line, Path} from 'react-native-svg';
+import {Animated} from 'react-native';
+import {
+  SCALE_MARGIN,
+  STROKE_WIDTH,
+  SCALE_LONG_WIDTH,
+} from '@components/wave/const/defaultconst';
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 function WaveView(props) {
   const {x, y, radius, progress, total} = props;
+  const height = radius * 2;
 
-  const sHeight = useMemo(() => {
-    return (progress / 100) * (radius * 2);
-  }, [radius, progress]);
+  const waveAnim = useRef(new Animated.Value(0)).current;
 
-  const singleAngle = 90 / 25;
+  useEffect(() => {
+    const animationParams = {
+      toValue: 1,
+      duration: 2000,
+      useNativeDriver: true,
+    };
+
+    const fadeInAnimation = Animated.timing(waveAnim, {
+      ...animationParams,
+      toValue: 1,
+    });
+
+    const fadeOutAnimation = Animated.timing(waveAnim, {
+      ...animationParams,
+      toValue: 0,
+    });
+
+    const sequenceAnimation = Animated.sequence([
+      fadeInAnimation,
+      fadeOutAnimation,
+    ]);
+
+    const loopedAnimation = Animated.loop(sequenceAnimation);
+
+    loopedAnimation.start();
+
+    return () => {
+      loopedAnimation.stop(); // 清除动画
+    };
+  }, [waveAnim]);
+
+  /*const wavePath = waveAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [
+      'M27 150 C150,200 150,100 273,150 A90,90 0 0,1 27,150 Z',
+      'M27 150 C100,100 150,200 273,150 A90,90 0 0,1 27,150 Z',
+    ],
+  });*/
+
+  const sHeight = useMemo(
+    () => radius - (height * progress) / 100,
+    [radius, height, progress],
+  );
+
+  const cx = useMemo(
+    () => Math.sqrt(Math.pow(radius, 2) - Math.pow(sHeight, 2)),
+    [radius, sHeight],
+  );
 
   function drawWave() {
-    const sAngle = 90 + singleAngle * 3 + sHeight * singleAngle;
-    const eAngle = 90 - singleAngle * 3 + sHeight * singleAngle;
-    // console.log(`sAngle: ${sAngle} eAngle: ${eAngle}`);
-    const startX = x + sHeight * Math.cos((sAngle / 180.0) * Math.PI);
-    const startY = y + sHeight * Math.sin((sAngle / 180.0) * Math.PI);
-
-    // const cX = sHeight * Math.cos((270 / 180) * Math.PI);
-    // const cY = sHeight * Math.sin((270 / 180) * Math.PI);
-
-    const endX = sHeight * Math.cos((eAngle / 180.0) * Math.PI);
-    const endY = sHeight * Math.sin((eAngle / 180.0) * Math.PI);
-
     console.log('================================');
-    console.log(`sHeight: ${sHeight}`);
-    console.log(`startX: ${startX}  startY: ${startY}`);
-    // console.log(`cX: ${cX}  cY: ${cY}`);
-    console.log(`endX: ${endX}  endY: ${endY}`);
+    console.log(`sHeight: ${sHeight} ss: ${cx}`);
+    // console.log(`sAngle: ${sAngle}`);
+    // console.log(`startX: ${startX}  startY: ${startY}`);
     console.log('================================');
+
+    const sRadius = radius + STROKE_WIDTH + SCALE_MARGIN + SCALE_LONG_WIDTH;
+
+    const wavePath = waveAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        `M${sRadius - cx} ${sRadius + sHeight} C${sRadius - cx},200 ${
+          sRadius - cx
+        },100 273,${sRadius - cx} A90,90 0 0,1 ${sRadius - cx},${
+          sRadius + sHeight
+        } Z`,
+        'M27 150 C100,100 150,200 273,150 A90,90 0 0,1 27,150 Z',
+      ],
+    });
+
+    const x1 = sRadius - cx;
+    const y1 = sRadius + sHeight;
+
+    const x2 = sRadius + cx;
+
     return (
       <G>
         <Circle cx={x} cy={y} r={radius} fill={'pink'} />
-        <Circle cx={x} cy={y} r={radius} fill="none" />
-        <G>
-          <Path
-            d="M28 150 C150,200 150,100 273,150 A90,90 0 0,1 28,150z"
-            fill="rgba(135,206,250,.4)"
-          />
-          <Path
-            d="M28,150 C150,100 150,200 273,150 A90,90 0 0,1 28,150z"
-            fill="rgba(135,206,250,.3)"
-          />
-        </G>
+        <AnimatedPath
+          d={`M${x1} ${y1} C${x1},200 150,100 ${x2},${y1} A10,10 0 0,1 ${x1},${y1} Z`}
+          fill="rgba(135,206,250,.4)"
+        />
       </G>
     );
   }
